@@ -1,7 +1,7 @@
 package org.example.springstudy.controller;
 
-import org.example.springstudy.data.Gender;
 import org.example.springstudy.data.Person;
+import org.example.springstudy.dto.PersonCreateRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ public class OpenController {
 
     @GetMapping("/")
     public String hello() {
-       return "Hello World!";
+        return "Hello World!";
     }
 
     @GetMapping("/health")
@@ -32,20 +32,24 @@ public class OpenController {
     }
 
     @PostMapping("/persons")
-    public String addPerson() {
+    public String addPerson(
+            @RequestBody PersonCreateRequest request
+    ) {
         System.out.println("POST /persons 호출");
+        System.out.println(request);
+        persons.add(new Person(request.getName(), request.getAge(), request.getHeight(), request.getGender()));
 
-        Person person = new Person("문현욱", 27, 183.0, Gender.MALE);
-        persons.add(person);
+//        Person person = new Person("문현욱", 27, 183.0, Gender.MALE);
+//        persons.add(person);
         return "OK";
     }
 
     @GetMapping("/persons")
-    public String getPerson() {
+    public List<Person> persons() {
         System.out.println("GET /persons 호출");
 
         System.out.println(persons);
-        return "OK";
+        return persons;
     }
 
     @GetMapping("/persons/{id}")
