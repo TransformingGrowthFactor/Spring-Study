@@ -1,0 +1,85 @@
+name: "02. Triggers & Inputs"
+
+on:
+  push:
+    branches: ["study/**"]
+    paths:
+      - ".github/workflows/02-triggers-and-inputs.yml"
+
+  pull_request:
+    branches: ["study/**"]        # 목적지(base) 브랜치 기준! 내 작업 브랜치 이름이 아님
+    types: [opened, synchronize, reopened]   # 기본값과 같음 (생략 가능)
+    paths:
+      - ".github/workflows/02-triggers-and-inputs.yml"
+
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "인사할 이름"
+        type: string
+        required: true
+        default: "student"
+      stage:
+        description: "대상 환경 (choice → 드롭다운)"
+        type: choice
+        options: [dev, prod]
+        default: dev
+      dry-run:
+        description: "실제로 하지 않고 출력만 (boolean → 체크박스)"
+        type: boolean
+        default: true
+
+  # schedule 은 "기본 브랜치(main)의 최신 commit" 에서만 실행된다.
+  # 이 브랜치에서는 동작하지 않으므로 주석으로 문법만 익힌다.
+  # cron 다섯 칸: 분 시 일 월 요일 (기본 UTC)
+  # schedule:
+  #   - cron: "17 0 * * 1-5"      # 월~금 00:17 UTC = 한국 09:17 (정각은 몰려서 늦어질 수 있음)
+  #   - cron: "30 8 * * 1"
+  #     timezone: "Asia/Seoul"    # 시간대 지정 가능
+
+jobs:
+  show-event:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 어떤 이벤트로 실행됐나
+        run: echo "event_name = ${{ github.event_name }}"
+
+      - name: workflow_dispatch 일 때만 - 입력값 출력
+        if: github.event_name == 'workflow_dispatch'
+        # inputs 값은 사용자가 입력한 문자열이라 run 에 직접 ${{ }} 로 넣지 말고 env 로 넘긴다 (스크립트 인젝션 방지, 05 참고)
+        env:
+          NAME: ${{ inputs.name }}
+          STAGE: ${{ inputs.stage }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          echo "hello $NAME"
+          echo "stage=$STAGE, dry-run=$DRY_RUN"
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🧪 dry-run 이라 출력만 합니다"
+          else
+            echo "🚀 (가정) $STAGE 에 실제 작업을 수행합니다"
+          fi
+
+      - name: pull_request 일 때만 - PR 정보 출력
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR #${{ github.event.pull_request.number }}: $PR_TITLE"
+          echo "${{ github.head_ref }} → ${{ github.base_ref }}"
+
+      - name: push 일 때만 - 커밋 정보 출력
+        if: github.event_name == 'push'
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          echo "push 된 브랜치: ${{ github.ref_name }}"
+          echo "커밋 메시지: $COMMIT_MSG"
+
+      - name: 이벤트 전체 JSON (펼쳐 보기)
+        env:
+          EVENT_JSON: ${{ toJSON(github.event) }}
+        run: |
+          echo "::group::github.event"
+          echo "$EVENT_JSON"
+          echo "::endgroup::"
