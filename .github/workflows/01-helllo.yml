@@ -13,3 +13,38 @@ jobs:
     steps:
       - name: 인사하기
         run: echo "hello world"
+
+      - name: 실행 환경 보기
+        # ${{ ... }} 는 명령 실행 "전에" GitHub 가 실제 값으로 바꿔 넣는다
+        run: |
+          echo "저장소     : ${{ github.repository }}"
+          echo "브랜치/ref : ${{ github.ref }} (${{ github.ref_name }})"
+          echo "이벤트     : ${{ github.event_name }}"
+          echo "실행한 사람: ${{ github.actor }}"
+          echo "커밋 SHA   : ${{ github.sha }}"
+          uname -a
+          java -version 2>&1 | head -1   # runner 에 미리 설치된 Java
+          python3 --version              # runner 에 미리 설치된 Python
+
+      - name: 현재 시각 (과제 - 한국 시각과 몇 시간 차이?)
+        run: |
+          date
+          TZ=Asia/Seoul date
+
+      - name: 로그 묶기와 Summary
+        run: |
+          echo "::group::runner 에 설치된 도구 일부 (펼쳐 보기)"
+          docker --version
+          git --version
+          gradle --version 2>/dev/null | head -3 || true
+          echo "::endgroup::"
+
+          # 이 파일에 쓴 Markdown 은 실행 Summary 화면에 그대로 보인다
+          {
+            echo "### 👋 Hello 실행 요약"
+            echo "| 항목 | 값 |"
+            echo "|---|---|"
+            echo "| 이벤트 | ${{ github.event_name }} |"
+            echo "| 브랜치 | ${{ github.ref_name }} |"
+            echo "| 실행자 | ${{ github.actor }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
