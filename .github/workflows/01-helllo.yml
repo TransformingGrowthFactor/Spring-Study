@@ -1,0 +1,15 @@
+name: "01. Hello"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["study/**"]
+    paths:
+      - ".github/workflows/01-hello.yml"
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 인사하기
+        run: echo "hello world"
